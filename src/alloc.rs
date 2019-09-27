@@ -1,7 +1,6 @@
 use super::execution::{eval_expr, invoke, Frame, StackEntry};
 use super::module::*;
 use failure::{format_err, Error};
-use log::debug;
 use std::cell::RefCell;
 use std::convert::{Into, TryFrom};
 use std::rc::Rc;
@@ -394,7 +393,7 @@ fn instantiate(
     module: &Module,
     externvals: &[ExternVal],
 ) -> Result<Rc<RefCell<ModInst>>, Error> {
-    let mut global_vals = globals_init(store, module, externvals)?;
+    let global_vals = globals_init(store, module, externvals)?;
 
     let modinst = allocmodule(store, module, externvals, &global_vals)?;
 

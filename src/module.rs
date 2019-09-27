@@ -1,7 +1,7 @@
 use byteorder::ReadBytesExt;
 use failure::format_err;
 use failure::Error;
-use log::debug;
+use log::{debug, warn};
 use std::io::{BufReader, Read};
 
 use super::alloc::Val;
@@ -304,6 +304,15 @@ fn data<R: Read>(r: &mut BufReader<R>) -> Result<Data, Error> {
     })
 }
 
+fn nameassoc<R: Read>(r: &mut BufReader<R>) -> Result<(u32, String), Error> {
+    Ok((r.read_u32_leb128()?, name(r)?))
+}
+
+type NameMap = std::collections::HashMap<u32, String>;
+fn namemap<R: Read>(r: &mut BufReader<R>) -> Result<NameMap, Error> {
+    Ok(vec(r, nameassoc)?.into_iter().collect())
+}
+
 pub(crate) fn vec<R: Read, F, T, E>(r: &mut BufReader<R>, f: F) -> Result<Vec<T>, Error>
 where
     F: Fn(&mut BufReader<R>) -> Result<T, E>,
@@ -352,8 +361,30 @@ where
 
         match secno {
             0 => {
-                // noop
                 debug!("custom section");
+                match name(&mut reader) {
+                    Ok(ref n) if *n == "name".to_string() => {
+                        let subno = reader.read_u8()?;
+                        let _subsize = reader.read_u32_leb128()?;
+
+                        match subno {
+                            0 => {
+                                let modname = name(&mut reader)?;
+                                debug!("modname: {}", modname);
+                            }
+                            1 => {
+                                debug!("funcname: {:?}", namemap(&mut reader)?);
+                            }
+                            2 => {
+                                // local names
+                            }
+                            _ => {
+                                warn!("unknown subno: {}", subno);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
             }
             1 => {
                 debug!("type section");
@@ -362,6 +393,7 @@ where
             2 => {
                 debug!("import section");
                 m.imports.append(&mut vec(&mut reader, import)?);
+                debug!("{:?}", m.imports);
             }
             3 => {
                 debug!("function section");

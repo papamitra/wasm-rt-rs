@@ -1,6 +1,6 @@
 use super::alloc::{FuncAddr, FuncInst, ModInst, Store, Val};
 use super::instruction::{BlockType, Instr, MemArg};
-use super::module::{Locals, ValType};
+use super::module::Locals;
 use failure::{format_err, Error};
 use std::cell::RefCell;
 use std::convert::{Into, TryFrom};
@@ -195,7 +195,7 @@ fn eval(stack: &mut Stack, store: &mut Store, instr: &Instr) -> Result<Cont, Err
 
             return eval_instrs(stack, store, instrs);
         }
-        Loop(blocktype, instrs) => {
+        Loop(_blocktype, instrs) => {
             let l = Label::new_with(0, instrs.clone()); // FIXME: clone
             stack.push(StackEntry::Label(l));
             match eval_instrs(stack, store, instrs)? {
@@ -389,7 +389,6 @@ fn eval(stack: &mut Stack, store: &mut Store, instr: &Instr) -> Result<Cont, Err
                 _ => {}
             };
         }
-        _ => unreachable!(),
     }
 
     Ok(Cont::Continue)
@@ -1011,7 +1010,7 @@ pub(crate) fn invoke(a: FuncAddr, stack: &mut Stack, store: &mut Store) -> Resul
                     .collect::<Vec<_>>(),
             );
 
-            let mut frame = Rc::new(RefCell::new(Frame::new_with(m, valn, f.modinst.clone())));
+            let frame = Rc::new(RefCell::new(Frame::new_with(m, valn, f.modinst.clone())));
             stack.push(StackEntry::Frame(frame));
 
             let blocktype = if f.functype.1.len() == 0 {
