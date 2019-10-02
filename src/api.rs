@@ -27,35 +27,37 @@ pub fn module_instantiate(
 }
 
 pub fn module_imports(m: &Module) -> Vec<(String, String, ExternType)> {
-    let mut imports = Vec::new();
+    m.imports
+        .iter()
+        .map(|im| {
+            let externval = match im.desc {
+                ImportDesc::Func(x) => ExternType::Func(m.types[x as usize].clone()),
+                ImportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
+                ImportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
+                ImportDesc::Global(x) => {
+                    ExternType::Global(m.globals[x as usize].globaltype.clone())
+                }
+            };
 
-    for im in m.imports.iter() {
-        let externval = match im.desc {
-            ImportDesc::Func(x) => ExternType::Func(m.types[x as usize].clone()),
-            ImportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
-            ImportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
-            ImportDesc::Global(x) => ExternType::Global(m.globals[x as usize].globaltype.clone()),
-        };
-
-        imports.push((im.modname.clone(), im.name.clone(), externval));
-    }
-
-    imports
+            (im.modname.clone(), im.name.clone(), externval)
+        })
+        .collect()
 }
 
 pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
-    let mut exports = Vec::new();
+    m.exports
+        .iter()
+        .map(|ex| {
+            let externval = match ex.desc {
+                ExportDesc::Func(x) => ExternType::Func(m.types[x as usize].clone()),
+                ExportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
+                ExportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
+                ExportDesc::Global(x) => {
+                    ExternType::Global(m.globals[x as usize].globaltype.clone())
+                }
+            };
 
-    for ex in m.exports.iter() {
-        let externval = match ex.desc {
-            ExportDesc::Func(x) => ExternType::Func(m.types[x as usize].clone()),
-            ExportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
-            ExportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
-            ExportDesc::Global(x) => ExternType::Global(m.globals[x as usize].globaltype.clone()),
-        };
-
-        exports.push((ex.name.clone(), externval));
-    }
-
-    exports
+            (ex.name.clone(), externval)
+        })
+        .collect()
 }
