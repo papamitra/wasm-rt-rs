@@ -49,7 +49,12 @@ pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
         .iter()
         .map(|ex| {
             let externval = match ex.desc {
-                ExportDesc::Func(x) => ExternType::Func(m.types[x as usize].clone()),
+                ExportDesc::Func(x) => {
+                    // Functions are referenced through function indices,
+                    // starting with the smallest index not referencing a function import.
+                    let idx = x as usize - m.imports.len();
+                    ExternType::Func(m.types[m.funcs[idx].typeidx as usize].clone())
+                }
                 ExportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
                 ExportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
                 ExportDesc::Global(x) => {

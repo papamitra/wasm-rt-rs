@@ -64,18 +64,24 @@ pub(crate) struct Export {
     pub(crate) desc: ExportDesc,
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct Func {
+    pub(crate) typeidx: u32,
+    pub(crate) locals: Vec<Locals>,
+    pub(crate) expr: Vec<Instr>,
+}
+
 #[derive(Debug)]
 pub struct Module {
     pub(crate) types: Vec<FuncType>,
     pub(crate) imports: Vec<Import>,
-    pub(crate) funcs: Vec<u32>,
     pub(crate) tables: Vec<TableType>,
     pub(crate) mems: Vec<Limits>,
     pub(crate) globals: Vec<Global>,
     pub(crate) exports: Vec<Export>,
     pub(crate) start: Option<u32>,
     pub(crate) elems: Vec<Elem>,
-    pub(crate) codes: Vec<Code>,
+    pub(crate) funcs: Vec<Func>,
     pub(crate) datas: Vec<Data>,
 }
 
@@ -91,7 +97,6 @@ impl Module {
             exports: Vec::new(),
             start: None,
             elems: Vec::new(),
-            codes: Vec::new(),
             datas: Vec::new(),
         }
     }
@@ -170,6 +175,8 @@ where
     let t2 = (0..t2n)
         .map(|_| valtype(r.read_u8()?))
         .collect::<Result<Vec<_>, _>>()?;
+
+    println!("functype: {:?}", (t1.clone(), t2.clone()));
 
     Ok(FuncType(t1, t2))
 }
@@ -278,11 +285,13 @@ pub(crate) struct Code {
 }
 
 fn code<R: Read>(r: &mut BufReader<R>) -> Result<Code, Error> {
-    Ok(Code {
+    let code = Code {
         size: r.read_u32_leb128()?,
         locals: vec(r, locals)?,
         expr: expr(r)?,
-    })
+    };
+    println!("code: {:?}", code);
+    Ok(code)
 }
 
 fn locals<R: Read>(r: &mut BufReader<R>) -> Result<Locals, Error> {
@@ -342,6 +351,7 @@ where
     }
 
     let mut m = Module::new();
+    let mut funcs = Vec::new();
 
     loop {
         let secno = r.read_u8();
@@ -389,15 +399,17 @@ where
             1 => {
                 debug!("type section");
                 m.types.append(&mut vec(&mut reader, functype)?);
+                println!("types: {:?}", m.types);
             }
             2 => {
                 debug!("import section");
                 m.imports.append(&mut vec(&mut reader, import)?);
+                println!("imports: {:?}", m.imports);
             }
             3 => {
                 debug!("function section");
-                m.funcs
-                    .append(&mut vec(&mut reader, |r| r.read_u32_leb128())?);
+                funcs.append(&mut vec(&mut reader, |r| r.read_u32_leb128())?);
+                println!("funcs: {:?}", m.funcs);
             }
             4 => {
                 debug!("table section");
@@ -414,6 +426,7 @@ where
             7 => {
                 debug!("export section");
                 m.exports.append(&mut vec(&mut reader, export)?);
+                println!("exports: {:?}", m.exports);
             }
             8 => {
                 debug!("start section");
@@ -425,7 +438,22 @@ where
             }
             10 => {
                 debug!("code section");
-                m.codes.append(&mut vec(&mut reader, code)?);
+                m.funcs.append(
+                    &mut vec(&mut reader, code)?
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, c)| {
+                            Ok(Func {
+                                typeidx: *funcs.get(i).ok_or(format_err!(
+                                    "module failed: funcs[{}] is out of bounds",
+                                    i
+                                ))?,
+                                locals: c.locals,
+                                expr: c.expr,
+                            })
+                        })
+                        .collect::<Result<Vec<Func>, Error>>()?,
+                );
             }
             11 => {
                 debug!("data section");

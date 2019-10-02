@@ -199,7 +199,7 @@ impl Into<Val> for f64 {
 pub(crate) struct WasmFuncInst {
     pub(crate) functype: FuncType,
     pub(crate) modinst: Rc<RefCell<ModInst>>,
-    pub(crate) code: Code,
+    pub(crate) code: Func,
 }
 
 #[derive(Debug)]
@@ -274,8 +274,8 @@ pub(crate) fn allocmodule(
         .globals
         .append(&mut extern_globals(externvals));
 
-    for &func in m.funcs.iter() {
-        let funcaddr = allocfunc(s, func, &modinst, m)?;
+    for func in m.funcs.iter() {
+        let funcaddr = allocfunc(s, &func, &modinst, m)?;
         modinst.borrow_mut().funcs.push(funcaddr);
     }
 
@@ -332,26 +332,21 @@ pub(crate) fn allocmodule(
 
 fn allocfunc(
     s: &mut Store,
-    funcidx: u32,
+    func: &Func,
     modinst: &Rc<RefCell<ModInst>>,
     m: &Module,
 ) -> Result<FuncAddr, Error> {
-    let funcidx = funcidx as usize;
     let addr = s.funcs.len();
-    let ftype = match modinst.borrow().types.get(funcidx) {
-        Some(t) => t.clone(),
-        _ => return Err(format_err!("allocfunc: invalid typeindex {}", funcidx)),
-    };
 
-    let code = match m.codes.get(funcidx) {
-        Some(c) => c,
-        _ => return Err(format_err!("allocfunc: invalid codeindex {}", funcidx)),
+    let ftype = match modinst.borrow().types.get(func.typeidx as usize) {
+        Some(t) => t.clone(),
+        _ => return Err(format_err!("allocfunc: invalid typeindex {}", func.typeidx)),
     };
 
     s.funcs.push(FuncInst::WasmFuncInst(WasmFuncInst {
         functype: ftype,
         modinst: modinst.clone(),
-        code: code.clone(),
+        code: func.clone(),
     }));
     Ok(addr)
 }
