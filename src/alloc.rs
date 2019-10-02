@@ -17,7 +17,7 @@ pub(crate) struct ExportInst {
 }
 
 #[derive(Debug)]
-pub(crate) struct ModInst {
+pub struct ModInst {
     pub(crate) types: Vec<FuncType>,
     pub(crate) funcs: Vec<FuncAddr>,
     pub(crate) tables: Vec<TableAddr>,
@@ -40,7 +40,7 @@ impl ModInst {
 }
 
 #[derive(Debug)]
-pub(crate) enum ExternVal {
+pub enum ExternVal {
     Func(FuncAddr),
     Table(TableAddr),
     Mem(MemAddr),
@@ -215,7 +215,7 @@ pub(crate) struct GlobalInst {
 }
 
 #[derive(Debug)]
-pub(crate) struct Store {
+pub struct Store {
     pub(crate) funcs: Vec<FuncInst>,
     pub(crate) tables: Vec<TableInst>,
     pub(crate) mems: Vec<MemInst>,

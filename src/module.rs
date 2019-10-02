@@ -65,7 +65,7 @@ pub(crate) struct Export {
 }
 
 #[derive(Debug)]
-pub(crate) struct Module {
+pub struct Module {
     pub(crate) types: Vec<FuncType>,
     imports: Vec<Import>,
     pub(crate) funcs: Vec<u32>,

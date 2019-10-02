@@ -1,34 +1,43 @@
 #![allow(dead_code)]
 
-use env_logger;
 use failure::Error;
-use log::debug;
 use std::env;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufRead, BufReader};
 
-mod alloc;
-mod execution;
-mod instruction;
-mod leb128;
-mod module;
+use wasm_rt;
 
 fn main() -> Result<(), Error> {
     env_logger::init();
 
+    let s = wasm_rt::store_init();
+
     let args: Vec<String> = env::args().collect();
-
-    debug!("read wasm: {}", args[1]);
-
+    //    let f = File::open("../wasm-game-of-life/pkg/wasm_game_of_life_bg.wasm")?;
     let f = File::open(&args[1])?;
-    let mut reader = BufReader::new(f);
+    let mut f = BufReader::new(f);
+    let bs = f.fill_buf()?;
 
-    let md = module::module(&mut reader)?;
+    let m = wasm_rt::module_decode(bs)?;
 
-    let mut store = alloc::Store::new();
+    let (_s, _m) = wasm_rt::module_instantiate(s, &m, &Vec::new())?;
 
-    alloc::allocmodule(&mut store, &md, &Vec::new(), &Vec::new())?;
+    /*    env_logger::init();
 
-    //    instruction::instr(&mut BufReader::new(&mut vec![0u8].as_slice()));
+        let args: Vec<String> = env::args().collect();
+
+        //debug!("read wasm: {}", args[1]);
+
+        let f = File::open("../wasm-game-of-life/pkg/wasm_game_of_life_bg.wasm")?;
+        let mut reader = BufReader::new(f);
+
+        let _md = module::module(&mut reader)?;
+
+        //    let mut store = alloc::Store::new();
+
+        //    alloc::allocmodule(&mut store, &md, &Vec::new(), &Vec::new())?;
+
+        //    instruction::instr(&mut BufReader::new(&mut vec![0u8].as_slice()));
+    */
     Ok(())
 }
