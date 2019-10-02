@@ -27,16 +27,16 @@ impl ValType {
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct Limits(pub(crate) u32, pub(crate) u32); // min, max
+#[derive(Debug, Clone)]
+pub struct Limits(pub(crate) u32, pub(crate) u32); // min, max
 
-#[derive(Debug)]
-pub(crate) enum TableType {
+#[derive(Debug, Clone)]
+pub enum TableType {
     FuncRef(Limits),
 }
 
 #[derive(Debug)]
-enum ImportDesc {
+pub(crate) enum ImportDesc {
     Func(u32),
     Table(u32),
     Mem(u32),
@@ -44,10 +44,10 @@ enum ImportDesc {
 }
 
 #[derive(Debug)]
-struct Import {
-    modname: String,
-    name: String,
-    desc: ImportDesc,
+pub(crate) struct Import {
+    pub(crate) modname: String,
+    pub(crate) name: String,
+    pub(crate) desc: ImportDesc,
 }
 
 #[derive(Debug)]
@@ -67,7 +67,7 @@ pub(crate) struct Export {
 #[derive(Debug)]
 pub struct Module {
     pub(crate) types: Vec<FuncType>,
-    imports: Vec<Import>,
+    pub(crate) imports: Vec<Import>,
     pub(crate) funcs: Vec<u32>,
     pub(crate) tables: Vec<TableType>,
     pub(crate) mems: Vec<Limits>,
@@ -98,7 +98,7 @@ impl Module {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub(crate) struct FuncType(pub(crate) Vec<ValType>, pub(crate) Vec<ValType>);
+pub struct FuncType(pub(crate) Vec<ValType>, pub(crate) Vec<ValType>);
 
 fn import<R>(r: &mut R) -> Result<Import, Error>
 where
@@ -212,8 +212,8 @@ pub(crate) enum Mut {
     Var,
 }
 
-#[derive(Debug)]
-pub(crate) struct GlobalType {
+#[derive(Debug, Clone)]
+pub struct GlobalType {
     pub(crate) mutabl: Mut,
     pub(crate) valtype: ValType,
 }
@@ -302,6 +302,14 @@ fn data<R: Read>(r: &mut BufReader<R>) -> Result<Data, Error> {
         offset: expr(r)?,
         init: vec(r, |r| r.read_u8())?,
     })
+}
+
+#[derive(Debug)]
+pub enum ExternType {
+    Func(FuncType),
+    Table(TableType),
+    Mem(Limits),
+    Global(GlobalType),
 }
 
 pub(crate) fn vec<R: Read, F, T, E>(r: &mut BufReader<R>, f: F) -> Result<Vec<T>, Error>

@@ -254,6 +254,26 @@ pub(crate) fn allocmodule(
     let modinst = Rc::new(RefCell::new(ModInst::new()));
     modinst.borrow_mut().types = m.types.clone();
 
+    modinst
+        .borrow_mut()
+        .funcs
+        .append(&mut extern_funcs(externvals));
+
+    modinst
+        .borrow_mut()
+        .tables
+        .append(&mut extern_tables(externvals));
+
+    modinst
+        .borrow_mut()
+        .mems
+        .append(&mut extern_mems(externvals));
+
+    modinst
+        .borrow_mut()
+        .globals
+        .append(&mut extern_globals(externvals));
+
     for &func in m.funcs.iter() {
         let funcaddr = allocfunc(s, func, &modinst, m)?;
         modinst.borrow_mut().funcs.push(funcaddr);
@@ -277,26 +297,6 @@ pub(crate) fn allocmodule(
         let globaladdr = allocglobal(s, &global.globaltype, &val)?;
         modinst.borrow_mut().globals.push(globaladdr);
     }
-
-    modinst
-        .borrow_mut()
-        .funcs
-        .append(&mut extern_funcs(externvals));
-
-    modinst
-        .borrow_mut()
-        .tables
-        .append(&mut extern_tables(externvals));
-
-    modinst
-        .borrow_mut()
-        .mems
-        .append(&mut extern_mems(externvals));
-
-    modinst
-        .borrow_mut()
-        .globals
-        .append(&mut extern_globals(externvals));
 
     for export in m.exports.iter() {
         let v = match export.desc {
