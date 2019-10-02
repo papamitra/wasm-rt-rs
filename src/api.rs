@@ -1,5 +1,5 @@
 use super::alloc::{self, allocmodule, ExternVal, Store};
-use super::module::{module, ExternType, ImportDesc, Module};
+use super::module::{module, ExportDesc, ExternType, ImportDesc, Module};
 use failure::Error;
 use std::cell::RefCell;
 use std::io::BufReader;
@@ -41,4 +41,21 @@ pub fn module_imports(m: &Module) -> Vec<(String, String, ExternType)> {
     }
 
     imports
+}
+
+pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
+    let mut exports = Vec::new();
+
+    for ex in m.exports.iter() {
+        let externval = match ex.desc {
+            ExportDesc::Func(x) => ExternType::Func(m.types[x as usize].clone()),
+            ExportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
+            ExportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
+            ExportDesc::Global(x) => ExternType::Global(m.globals[x as usize].globaltype.clone()),
+        };
+
+        exports.push((ex.name.clone(), externval));
+    }
+
+    exports
 }

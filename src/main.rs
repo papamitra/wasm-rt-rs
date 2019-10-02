@@ -21,6 +21,7 @@ fn main() -> Result<(), Error> {
     let m = wasm_rt::module_decode(bs)?;
 
     println!("module imports: {:?}", wasm_rt::module_imports(&m));
+    println!("module exports: {:?}", wasm_rt::module_exports(&m));
 
     //    let (_s, _m) = wasm_rt::module_instantiate(s, &m, &Vec::new())?;
 
