@@ -1,5 +1,6 @@
-use super::alloc::{self, allocmodule, ExternVal, Store};
-use super::module::{module, ExportDesc, ExternType, ImportDesc, Module};
+use super::alloc::{self, allocmodule, ExternVal, FuncAddr, Store};
+use super::execution::Stack;
+use super::module::{module, ExportDesc, ExternType, FuncType, ImportDesc, Module};
 use failure::Error;
 use std::cell::RefCell;
 use std::io::BufReader;
@@ -63,11 +64,9 @@ pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
         .collect()
 }
 
-/*
 pub fn func_alloc<F>(s: Store, functype: &FuncType, hostfunc: F) -> (Store, FuncAddr)
 where
     F: Fn(&mut Stack, &mut Store) -> Result<(), Error>,
 {
     (s, 0)
 }
-*/

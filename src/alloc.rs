@@ -1,10 +1,13 @@
+use super::execution::Stack;
 use super::execution::{eval_expr, invoke, Frame, StackEntry};
 use super::module::*;
 use failure::{format_err, Error};
 use log::debug;
 use std::cell::RefCell;
 use std::convert::{Into, TryFrom};
+use std::fmt;
 use std::rc::Rc;
+
 pub type FuncAddr = usize;
 type TableAddr = usize;
 type MemAddr = usize;
@@ -92,7 +95,7 @@ fn extern_globals(externvals: &[ExternVal]) -> Vec<GlobalAddr> {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub(crate) enum Val {
+pub enum Val {
     I32(u32),
     I64(u64),
     F32(f32),
@@ -202,10 +205,21 @@ pub(crate) struct WasmFuncInst {
     pub(crate) code: Func,
 }
 
+pub(crate) struct HostFuncInst {
+    pub(crate) functype: FuncType,
+    pub(crate) func: Rc<RefCell<dyn Fn(&mut Stack, &mut Store) -> Result<(), Error>>>,
+}
+
+impl fmt::Debug for HostFuncInst {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "HostFuncInst {{ functype: {:?}}}", self.functype)
+    }
+}
+
 #[derive(Debug)]
 pub(crate) enum FuncInst {
     WasmFuncInst(WasmFuncInst),
-    HostFuncInst,
+    HostFuncInst(HostFuncInst),
 }
 
 #[derive(Debug)]
@@ -334,7 +348,7 @@ fn allocfunc(
     s: &mut Store,
     func: &Func,
     modinst: &Rc<RefCell<ModInst>>,
-    m: &Module,
+    _m: &Module, // FIXME
 ) -> Result<FuncAddr, Error> {
     let addr = s.funcs.len();
 
@@ -389,7 +403,7 @@ fn instantiate(
     module: &Module,
     externvals: &[ExternVal],
 ) -> Result<Rc<RefCell<ModInst>>, Error> {
-    let mut global_vals = globals_init(store, module, externvals)?;
+    let global_vals = globals_init(store, module, externvals)?;
 
     let modinst = allocmodule(store, module, externvals, &global_vals)?;
 

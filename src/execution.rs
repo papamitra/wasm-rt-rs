@@ -1,6 +1,6 @@
 use super::alloc::{FuncAddr, FuncInst, ModInst, Store, Val};
 use super::instruction::{BlockType, Instr, MemArg};
-use super::module::{Locals, ValType};
+use super::module::Locals;
 use failure::{format_err, Error};
 use std::cell::RefCell;
 use std::convert::{Into, TryFrom};
@@ -14,7 +14,7 @@ pub(crate) enum Cont {
 }
 
 #[derive(Debug)]
-pub(crate) struct Frame {
+pub struct Frame {
     arity: usize,
     locals: Vec<Val>,
     module: Rc<RefCell<ModInst>>,
@@ -39,7 +39,7 @@ impl Frame {
 }
 
 #[derive(Debug)]
-pub(crate) enum StackEntry {
+pub enum StackEntry {
     Val(Val),
     Label(Label),
     Frame(Rc<RefCell<Frame>>),
@@ -51,10 +51,10 @@ impl Into<StackEntry> for Val {
     }
 }
 
-type Stack = Vec<StackEntry>;
+pub type Stack = Vec<StackEntry>;
 
 #[derive(Debug)]
-pub(crate) struct Label {
+pub struct Label {
     arity: usize,
     instrs: Vec<Instr>,
 }
@@ -195,7 +195,7 @@ fn eval(stack: &mut Stack, store: &mut Store, instr: &Instr) -> Result<Cont, Err
 
             return eval_instrs(stack, store, instrs);
         }
-        Loop(blocktype, instrs) => {
+        Loop(_blocktype, instrs) => {
             let l = Label::new_with(0, instrs.clone()); // FIXME: clone
             stack.push(StackEntry::Label(l));
             match eval_instrs(stack, store, instrs)? {
@@ -389,7 +389,6 @@ fn eval(stack: &mut Stack, store: &mut Store, instr: &Instr) -> Result<Cont, Err
                 _ => {}
             };
         }
-        _ => unreachable!(),
     }
 
     Ok(Cont::Continue)
@@ -990,17 +989,14 @@ pub(crate) fn invoke(a: FuncAddr, stack: &mut Stack, store: &mut Store) -> Resul
 
             // TODO: Assert: due to vlidation, m<=1
 
-            let mut valn = Vec::new();
-            for _ in 0..n {
-                match stack.pop() {
-                    Some(StackEntry::Val(v)) => valn.push(v),
-                    _ => {
-                        return Err(format_err!(
-                            "invoke failed: stack head have something without Val"
-                        ))
-                    }
-                }
-            }
+            let mut valn = (0..n)
+                .map(|_| match stack.pop() {
+                    Some(StackEntry::Val(v)) => Ok(v),
+                    _ => Err(format_err!(
+                        "invoke failed: stack head have something without Val"
+                    )),
+                })
+                .collect::<Result<Vec<_>, Error>>()?;
 
             valn.append(
                 &mut f
@@ -1011,7 +1007,7 @@ pub(crate) fn invoke(a: FuncAddr, stack: &mut Stack, store: &mut Store) -> Resul
                     .collect::<Vec<_>>(),
             );
 
-            let mut frame = Rc::new(RefCell::new(Frame::new_with(m, valn, f.modinst.clone())));
+            let frame = Rc::new(RefCell::new(Frame::new_with(m, valn, f.modinst.clone())));
             stack.push(StackEntry::Frame(frame));
 
             let blocktype = if f.functype.1.len() == 0 {
@@ -1023,8 +1019,9 @@ pub(crate) fn invoke(a: FuncAddr, stack: &mut Stack, store: &mut Store) -> Resul
 
             return eval(stack, store, &instr);
         }
-        _ => {
-            // TODO: Host Function
+        HostFuncInst(f) => {
+            let func = f.func.clone();
+            (func.borrow())(stack, store)?;
         }
     }
     Ok(Cont::Continue)

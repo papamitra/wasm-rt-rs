@@ -2,7 +2,7 @@ use byteorder::ReadBytesExt;
 use failure::format_err;
 use failure::Error;
 use log::debug;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufReader, Read};
 
 use super::alloc::Val;
 use super::instruction::{expr, Instr};
@@ -381,7 +381,7 @@ where
                 match name(&mut reader) {
                     Ok(ref n) if *n == "name".to_string() => {
                         let subno = reader.read_u8()?;
-                        let subsize = reader.read_u32_leb128()?;
+                        let _subsize = reader.read_u32_leb128()?;
 
                         match subno {
                             0 => {
