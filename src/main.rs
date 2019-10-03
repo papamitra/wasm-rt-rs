@@ -6,7 +6,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 use wasm_rt;
-use wasm_rt::{ExternVal, ValType};
+use wasm_rt::{func_invoke, ExternVal, ValType};
 
 fn main() -> Result<(), Error> {
     env_logger::init();
@@ -39,7 +39,9 @@ fn main() -> Result<(), Error> {
     );
 
     let exvals = vec![ExternVal::Func(funcaddr)];
-    let (s, modinst) = wasm_rt::module_instantiate(s, &m, &exvals)?;
+    let (s, _modinst) = wasm_rt::module_instantiate(s, &m, &exvals)?;
+
+    func_invoke(s, 1, &vec![])?;
 
     Ok(())
 }

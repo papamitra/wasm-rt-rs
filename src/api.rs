@@ -1,7 +1,5 @@
-use super::alloc::{
-    self, allocmodule, instantiate, ExternVal, FuncAddr, FuncInst, HostFuncInst, Store,
-};
-use super::execution::Stack;
+use super::alloc::{self, instantiate, ExternVal, FuncAddr, FuncInst, HostFuncInst, Store, Val};
+use super::execution::{invoke, Stack};
 use super::module::{module, ExportDesc, ExternType, FuncType, ImportDesc, Module};
 use failure::Error;
 use std::cell::RefCell;
@@ -81,4 +79,13 @@ where
     }));
 
     (s, funcaddr)
+}
+
+pub fn func_invoke(s: Store, funcaddr: FuncAddr, vals: &[Val]) -> Result<(Store, Vec<Val>), Error> {
+    let mut s = s;
+    let mut stack = Vec::new();
+
+    invoke(funcaddr, &mut stack, &mut s)?;
+
+    Ok((s, vec![])) // FIXME
 }

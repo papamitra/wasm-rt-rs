@@ -259,7 +259,7 @@ pub(crate) struct MemInst {
     pub(crate) max: u32,
 }
 
-pub(crate) fn allocmodule(
+fn allocmodule(
     s: &mut Store,
     m: &Module,
     externvals: &[ExternVal],
