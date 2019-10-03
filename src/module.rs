@@ -183,8 +183,6 @@ where
         .map(|_| valtype(r.read_u8()?))
         .collect::<Result<Vec<_>, _>>()?;
 
-    println!("functype: {:?}", (t1.clone(), t2.clone()));
-
     Ok(FuncType(t1, t2))
 }
 
@@ -297,7 +295,6 @@ fn code<R: Read>(r: &mut BufReader<R>) -> Result<Code, Error> {
         locals: vec(r, locals)?,
         expr: expr(r)?,
     };
-    println!("code: {:?}", code);
     Ok(code)
 }
 
@@ -406,19 +403,16 @@ where
             1 => {
                 debug!("type section");
                 m.types.append(&mut vec(&mut reader, functype)?);
-                println!("types: {:?}", m.types);
             }
             2 => {
                 debug!("import section");
                 m.imports.append(&mut vec(&mut reader, import)?);
-                println!("imports: {:?}", m.imports);
             }
             3 => {
                 debug!("function section");
                 funcs.append(&mut vec(&mut reader, |r| {
                     r.read_u32_leb128().map(|x| x as usize)
                 })?);
-                println!("funcs: {:?}", m.funcs);
             }
             4 => {
                 debug!("table section");
@@ -435,7 +429,6 @@ where
             7 => {
                 debug!("export section");
                 m.exports.append(&mut vec(&mut reader, export)?);
-                println!("exports: {:?}", m.exports);
             }
             8 => {
                 debug!("start section");
