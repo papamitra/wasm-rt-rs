@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 use wasm_rt;
+use wasm_rt::{ExternVal, ValType};
 
 fn main() -> Result<(), Error> {
     env_logger::init();
@@ -25,8 +26,20 @@ fn main() -> Result<(), Error> {
 
     //    let (_s, _m) = wasm_rt::module_instantiate(s, &m, &Vec::new())?;
 
-    let (s, funcaddr) =
-        wasm_rt::func_alloc(s, &wasm_rt::FuncType(vec![], vec![]), |store, stack| Ok(()));
+    let (s, funcaddr) = wasm_rt::func_alloc(
+        s,
+        &wasm_rt::FuncType(vec![ValType::I32, ValType::I32], vec![]),
+        |stack, store| {
+            stack.pop();
+            stack.pop();
+
+            println!("hello, wasm");
+            Ok(())
+        },
+    );
+
+    let exvals = vec![ExternVal::Func(funcaddr)];
+    let (s, modinst) = wasm_rt::module_instantiate(s, &m, &exvals)?;
 
     Ok(())
 }

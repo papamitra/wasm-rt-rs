@@ -1,4 +1,6 @@
-use super::alloc::{self, allocmodule, ExternVal, FuncAddr, FuncInst, HostFuncInst, Store};
+use super::alloc::{
+    self, allocmodule, instantiate, ExternVal, FuncAddr, FuncInst, HostFuncInst, Store,
+};
 use super::execution::Stack;
 use super::module::{module, ExportDesc, ExternType, FuncType, ImportDesc, Module};
 use failure::Error;
@@ -15,16 +17,6 @@ pub fn store_init() -> Store {
 pub fn module_decode(bs: &[u8]) -> Result<Module, Error> {
     let mut r = BufReader::new(bs);
     module(&mut r)
-}
-
-pub fn module_instantiate(
-    s: Store,
-    m: &Module,
-    exvals: &[ExternVal],
-) -> Result<(Store, ModInst), Error> {
-    let mut s = s;
-    let modinst = allocmodule(&mut s, m, exvals, &Vec::new())?;
-    Ok((s, modinst))
 }
 
 pub fn module_imports(m: &Module) -> Vec<(String, String, ExternType)> {
@@ -62,6 +54,18 @@ pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
             (ex.name.clone(), externval)
         })
         .collect()
+}
+
+pub fn module_instantiate(
+    s: Store,
+    m: &Module,
+    exvals: &[ExternVal],
+) -> Result<(Store, ModInst), Error> {
+    let mut s = s;
+
+    let modinst = instantiate(&mut s, m, exvals)?;
+
+    Ok((s, modinst))
 }
 
 pub fn func_alloc<F>(s: Store, functype: &FuncType, hostfunc: F) -> (Store, FuncAddr)

@@ -398,7 +398,7 @@ fn allocglobal(s: &mut Store, globaltype: &GlobalType, val: &Val) -> Result<Glob
     Ok(addr)
 }
 
-fn instantiate(
+pub(crate) fn instantiate(
     store: &mut Store,
     module: &Module,
     externvals: &[ExternVal],
