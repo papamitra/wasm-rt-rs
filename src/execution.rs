@@ -1087,19 +1087,27 @@ fn eval_test() {
     {
         let mut s = Stack::new();
         let mut store = Store::new();
-        let mut frame = Frame::new();
+        let frame = Frame::new();
+        s.push(StackEntry::Frame(Rc::new(RefCell::new(frame))));
         s.push(StackEntry::Val(I32(0)));
-        eval(&mut s, &mut store, &mut frame, &NumInstr(0x45));
-        assert_eq!(s.pop(), Some(StackEntry::Val(I32(1))));
+        eval(&mut s, &mut store, &NumInstr(0x45));
+        match s.pop() {
+            Some(StackEntry::Val(v)) => assert_eq!(v, I32(1)),
+            _ => panic!(""),
+        }
     }
 
     {
         let mut s = Stack::new();
         let mut store = Store::new();
-        let mut frame = Frame::new();
+        let frame = Frame::new();
+        s.push(StackEntry::Frame(Rc::new(RefCell::new(frame))));
         s.push(StackEntry::Val(I64(3)));
         s.push(StackEntry::Val(I64(3)));
-        eval(&mut s, &mut store, &mut frame, &NumInstr(0x51));
-        assert_eq!(s.pop(), Some(StackEntry::Val(I32(1))));
+        eval(&mut s, &mut store, &NumInstr(0x51));
+        match s.pop() {
+            Some(StackEntry::Val(v)) => assert_eq!(v, I32(1)),
+            _ => panic!(""),
+        }
     }
 }
