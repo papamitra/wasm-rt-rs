@@ -35,12 +35,14 @@ pub enum TableType {
     FuncRef(Limits),
 }
 
+type TypeIdx = usize;
+
 #[derive(Debug)]
 pub(crate) enum ImportDesc {
-    Func(u32),
-    Table(u32),
-    Mem(u32),
-    Global(u32),
+    Func(TypeIdx),
+    Table(TableType),
+    Mem(Limits),
+    Global(GlobalType),
 }
 
 #[derive(Debug)]
@@ -113,10 +115,10 @@ where
     let modnm = name(r)?;
     let nm = name(r)?;
     let desc = match r.read_u8()? {
-        0x00 => Func(r.read_u32_leb128()?),
-        0x01 => Table(r.read_u32_leb128()?),
-        0x02 => Mem(r.read_u32_leb128()?),
-        0x03 => Global(r.read_u32_leb128()?),
+        0x00 => Func(r.read_u32_leb128()? as usize),
+        0x01 => Table(tabletype(r)?),
+        0x02 => Mem(limits(r)?),
+        0x03 => Global(globaltype(r)?),
         n => return Err(format_err!("Invalid ImportDesc 0x{:x}", n)),
     };
 

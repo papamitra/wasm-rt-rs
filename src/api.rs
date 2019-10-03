@@ -30,13 +30,11 @@ pub fn module_imports(m: &Module) -> Vec<(String, String, ExternType)> {
     m.imports
         .iter()
         .map(|im| {
-            let externval = match im.desc {
-                ImportDesc::Func(x) => ExternType::Func(m.types[x as usize].clone()),
-                ImportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
-                ImportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
-                ImportDesc::Global(x) => {
-                    ExternType::Global(m.globals[x as usize].globaltype.clone())
-                }
+            let externval = match &im.desc {
+                ImportDesc::Func(x) => ExternType::Func(m.types[*x].clone()),
+                ImportDesc::Table(x) => ExternType::Table(x.clone()),
+                ImportDesc::Mem(x) => ExternType::Mem(x.clone()),
+                ImportDesc::Global(x) => ExternType::Global(x.clone()),
             };
 
             (im.modname.clone(), im.name.clone(), externval)
@@ -66,3 +64,12 @@ pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
         })
         .collect()
 }
+
+/*
+pub fn func_alloc<F>(s: Store, functype: &FuncType, hostfunc: F) -> (Store, FuncAddr)
+where
+    F: Fn(&mut Stack, &mut Store) -> Result<(), Error>,
+{
+    (s, 0)
+}
+*/

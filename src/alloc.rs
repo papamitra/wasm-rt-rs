@@ -5,7 +5,7 @@ use log::debug;
 use std::cell::RefCell;
 use std::convert::{Into, TryFrom};
 use std::rc::Rc;
-pub(crate) type FuncAddr = usize;
+pub type FuncAddr = usize;
 type TableAddr = usize;
 type MemAddr = usize;
 type GlobalAddr = usize;
