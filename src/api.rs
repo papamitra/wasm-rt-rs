@@ -1,4 +1,4 @@
-use super::alloc::{self, allocmodule, ExternVal, FuncAddr, Store};
+use super::alloc::{self, allocmodule, ExternVal, FuncAddr, FuncInst, HostFuncInst, Store};
 use super::execution::Stack;
 use super::module::{module, ExportDesc, ExternType, FuncType, ImportDesc, Module};
 use failure::Error;
@@ -66,7 +66,15 @@ pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
 
 pub fn func_alloc<F>(s: Store, functype: &FuncType, hostfunc: F) -> (Store, FuncAddr)
 where
-    F: Fn(&mut Stack, &mut Store) -> Result<(), Error>,
+    F: Fn(&mut Stack, &mut Store) -> Result<(), Error> + 'static,
 {
-    (s, 0)
+    let mut s = s;
+    let funcaddr = s.funcs.len();
+
+    s.funcs.push(FuncInst::HostFuncInst(HostFuncInst {
+        functype: functype.clone(),
+        func: Rc::new(RefCell::new(hostfunc)),
+    }));
+
+    (s, funcaddr)
 }

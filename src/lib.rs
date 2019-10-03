@@ -9,5 +9,7 @@ mod module;
 
 pub use self::alloc::ExternVal;
 pub use self::api::{
-    module_decode, module_exports, module_imports, module_instantiate, store_init, ModInst,
+    func_alloc, module_decode, module_exports, module_imports, module_instantiate, store_init,
+    ModInst,
 };
+pub use self::module::FuncType;

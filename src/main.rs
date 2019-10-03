@@ -10,7 +10,7 @@ use wasm_rt;
 fn main() -> Result<(), Error> {
     env_logger::init();
 
-    let _s = wasm_rt::store_init();
+    let s = wasm_rt::store_init();
 
     let _args: Vec<String> = env::args().collect();
     let f = File::open("../wasm-game-of-life/pkg/wasm_game_of_life_bg.wasm")?;
@@ -24,6 +24,9 @@ fn main() -> Result<(), Error> {
     println!("module exports: {:?}", wasm_rt::module_exports(&m));
 
     //    let (_s, _m) = wasm_rt::module_instantiate(s, &m, &Vec::new())?;
+
+    let (s, funcaddr) =
+        wasm_rt::func_alloc(s, &wasm_rt::FuncType(vec![], vec![]), |store, stack| Ok(()));
 
     Ok(())
 }

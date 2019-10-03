@@ -9,7 +9,7 @@ use super::instruction::{expr, Instr};
 use super::leb128::ReadLEB128Ext;
 
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub(crate) enum ValType {
+pub enum ValType {
     I32,
     I64,
     F32,
@@ -110,7 +110,7 @@ impl Module {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct FuncType(pub(crate) Vec<ValType>, pub(crate) Vec<ValType>);
+pub struct FuncType(pub Vec<ValType>, pub Vec<ValType>);
 
 fn import<R>(r: &mut R) -> Result<Import, Error>
 where
