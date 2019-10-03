@@ -52,12 +52,17 @@ pub(crate) struct Import {
     pub(crate) desc: ImportDesc,
 }
 
+type FuncIdx = usize;
+type TableIdx = usize;
+type MemIdx = usize;
+type GlobalIdx = usize;
+
 #[derive(Debug)]
 pub(crate) enum ExportDesc {
-    Func(u32),
-    Table(u32),
-    Mem(u32),
-    Global(u32),
+    Func(FuncIdx),
+    Table(TableIdx),
+    Mem(MemIdx),
+    Global(GlobalIdx),
 }
 
 #[derive(Debug)]
@@ -68,7 +73,7 @@ pub(crate) struct Export {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Func {
-    pub(crate) typeidx: u32,
+    pub(crate) typeidx: usize,
     pub(crate) locals: Vec<Locals>,
     pub(crate) expr: Vec<Instr>,
 }
@@ -136,10 +141,10 @@ where
     use ExportDesc::*;
     let nm = name(r)?;
     let desc = match r.read_u8()? {
-        0x00 => Func(r.read_u32_leb128()?),
-        0x01 => Table(r.read_u32_leb128()?),
-        0x02 => Mem(r.read_u32_leb128()?),
-        0x03 => Global(r.read_u32_leb128()?),
+        0x00 => Func(r.read_u32_leb128()? as usize),
+        0x01 => Table(r.read_u32_leb128()? as usize),
+        0x02 => Mem(r.read_u32_leb128()? as usize),
+        0x03 => Global(r.read_u32_leb128()? as usize),
         n => return Err(format_err!("Invalid ImportDesc 0x{:x}", n)),
     };
 
@@ -410,7 +415,9 @@ where
             }
             3 => {
                 debug!("function section");
-                funcs.append(&mut vec(&mut reader, |r| r.read_u32_leb128())?);
+                funcs.append(&mut vec(&mut reader, |r| {
+                    r.read_u32_leb128().map(|x| x as usize)
+                })?);
                 println!("funcs: {:?}", m.funcs);
             }
             4 => {

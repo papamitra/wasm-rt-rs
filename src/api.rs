@@ -50,14 +50,12 @@ pub fn module_exports(m: &Module) -> Vec<(String, ExternType)> {
                 ExportDesc::Func(x) => {
                     // Functions are referenced through function indices,
                     // starting with the smallest index not referencing a function import.
-                    let idx = x as usize - m.imports.len();
-                    ExternType::Func(m.types[m.funcs[idx].typeidx as usize].clone())
+                    let idx = x - m.imports.len();
+                    ExternType::Func(m.types[m.funcs[idx].typeidx].clone())
                 }
-                ExportDesc::Table(x) => ExternType::Table(m.tables[x as usize].clone()),
-                ExportDesc::Mem(x) => ExternType::Mem(m.mems[x as usize].clone()),
-                ExportDesc::Global(x) => {
-                    ExternType::Global(m.globals[x as usize].globaltype.clone())
-                }
+                ExportDesc::Table(x) => ExternType::Table(m.tables[x].clone()),
+                ExportDesc::Mem(x) => ExternType::Mem(m.mems[x].clone()),
+                ExportDesc::Global(x) => ExternType::Global(m.globals[x].globaltype.clone()),
             };
 
             (ex.name.clone(), externval)
