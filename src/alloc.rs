@@ -314,9 +314,13 @@ fn allocmodule(
 
     for export in m.exports.iter() {
         let v = match export.desc {
-            ExportDesc::Func(x) => ExternVal::Func(*modinst.borrow().funcs.get(x as usize).ok_or(
-                format_err!("allocmodule failed: funcaddr[{}] is out of bounds", x),
-            )?),
+            ExportDesc::Func(x) => {
+                let funcidx = x - m.imports.len();
+                ExternVal::Func(*modinst.borrow().funcs.get(funcidx).ok_or(format_err!(
+                    "allocmodule failed: funcaddr[{}] is out of bounds",
+                    x
+                ))?)
+            }
             ExportDesc::Table(x) => {
                 ExternVal::Table(*modinst.borrow().tables.get(x as usize).ok_or(format_err!(
                     "allocmodule failed: tableaddr[{}] is out of bounds",
