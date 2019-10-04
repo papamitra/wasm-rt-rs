@@ -16,10 +16,11 @@ fn main() {
     let _args: Vec<String> = env::args().collect();
     let f = File::open("../wasm-game-of-life/pkg/wasm_game_of_life_bg.wasm").unwrap();
     //let f = File::open(&args[1]).unwrap();
+    let mut buf = Vec::new();
     let mut f = BufReader::new(f);
-    let bs = f.fill_buf().unwrap();
+    f.read_to_end(&mut buf).unwrap();
 
-    let m = wasm_rt::module_decode(bs).unwrap();
+    let m = wasm_rt::module_decode(&buf).unwrap();
 
     println!("module imports: {:?}", wasm_rt::module_imports(&m));
     println!("module exports: {:?}", wasm_rt::module_exports(&m));
